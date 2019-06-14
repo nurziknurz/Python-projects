@@ -1,0 +1,143 @@
+import picamera
+import time
+import datetime
+import os
+import cv2
+import struct
+import smtplib
+import ssl
+from email.mime.image import MIMEImage
+from email.mime.multipart import MIMEMultipart
+
+
+#Procedure to make a photo in high resolution
+def capture_motion(difference):
+
+    current_diff = difference
+
+    with picamera.PiCamera() as camera:
+
+        now_date = datetime.datetime.now()
+
+        camera.resolution = (800,600)
+
+        camera.annotate_text = 'This shot was made on ' + str(now_date.year) + '-' + str(now_date.month) + '-' + str(now_date.day) + ' at ' + str(now_date.hour) + ':' + str(now_date.minute) + '\n' + ' diff = ' + str(current_diff)
+
+        camera.capture('motion_capture.jpg', use_video_port = True)
+
+#Procedure to send a photo via e-mail
+def send_picture():
+
+    toaddr = 'konstantin.kalushev@gmail.com'
+    me = 'robot.tarasovka@yandex.ru'
+    subject = 'Current photo from Tarasovka ' + str(now_date.year) + '-' + str(now_date.month) + '-' + str(now_date.day) + ' at ' + str(now_date.hour) + ':' + str(now_date.minute)
+
+    msg = MIMEMultipart()
+    msg['Subject'] = subject
+    msg['From'] = me
+    msg['To'] = toaddr
+    msg.preamble = 'from Tarasovka'
+
+    fp = open('motion_capture.jpg', 'rb')
+    img = MIMEImage(fp.read())
+    fp.close()
+    msg.attach(img)
+
+    try:
+        s = smtplib.SMTP_SSL('smtp.yandex.ru:465')
+        s.ehlo()
+        #s.starttls()
+        s.ehlo()
+        s.login(user = 'robot.tarasovka@yandex.ru', password = 'nurzik2011')
+        s.sendmail(me, toaddr, msg.as_string())
+        s.quit()
+    except SMTPException as error:
+        print('Error sending email')
+
+
+
+#Starting the app with a delay
+print('Motion detector app is initialized')
+
+time.sleep(10)
+
+threshold = 30000
+
+no_pixels = 4000
+
+motion_counter = 0
+
+diff = 0
+first = True
+
+
+print("Starting camera session...")
+
+
+#Starting the main loop
+while True:
+    
+    with picamera.PiCamera() as camera:
+        
+            camera.led = False
+            
+            now_date = datetime.datetime.now()
+
+            camera.resolution = (320,240)
+
+            # camera.annotate_text = 'This shot was made on ' + str(now_date.year) + '-' + str(now_date.month) + '-' + str(now_date.day) + ' at ' + str(now_date.hour) + ':' + str(now_date.minute)
+
+            camera.capture('current_photo.jpg', use_video_port = True)
+
+    
+    current_image = cv2.imread('current_photo.jpg', 0)
+
+   
+    if (first):
+
+        prev_image = current_image
+        first = False
+        continue
+
+    cnt = 0
+    diff = 0
+
+    width = current_image.shape[1]
+    height = current_image.shape[0]
+    #print('Shape ' + str(width) + ' x ' + str(height))
+    
+    #Comparing two pictures and calculating "diff" in pixels
+    for i in range (0, width):
+        for j in range (0, height):
+            cnt = cnt+1
+            if cnt == int((width*height)/no_pixels):
+
+                pixel1 = current_image[j][i]
+                pixel2 = prev_image[j][i]
+                
+                #Comparing the difference in a monohrome picture
+                diff = diff + abs(int(pixel1) - int(pixel2))
+                
+                #Comparing differences in an RGB picture
+                #diff = diff + abs(int(pixel1[2])-int(pixel2[2]))
+                #diff = diff + abs(int(pixel1[0])-int(pixel2[0]))
+                #diff = diff + abs(int(pixel1[1])-int(pixel2[1]))
+                cnt = 0
+    
+    #Main decision on whether motion is captured
+    if diff > threshold:
+         motion_counter = motion_counter + 1
+         print('Motion # ' + str(motion_counter) + ' detected!!!')
+         print('Motion diff = ' + str(diff))
+         
+         #Saving two images which were compared for further investigation
+         cv2.imwrite('motion_' + str(motion_counter) + '_prev.jpg', prev_image)
+         cv2.imwrite('motion_' + str(motion_counter) + '_cur.jpg', current_image)
+         capture_motion(diff)
+         send_picture()
+         first = True
+         continue
+
+    #print('Difference is ' + str(diff))
+
+    prev_image = current_image
