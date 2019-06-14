@@ -10,7 +10,7 @@ from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 
 import numpy as np
-from matplotlib import pyplot as plt
+
 
 
 def capture_motion(difference):
@@ -151,15 +151,18 @@ while True:
                 #diff = diff + abs(int(pixel1[0])-int(pixel2[0]))
                 #diff = diff + abs(int(pixel1[1])-int(pixel2[1]))
                 cnt = 0
+
     if diff > threshold:
-         motion_counter = motion_counter + 1
-         print('Motion # ' + str(motion_counter) + ' detected!!!')
-         print('Motion diff = ' + str(diff))
 
          cv2.imwrite('motion_' + str(motion_counter) + '_prev.jpg', prev_image)
          cv2.imwrite('motion_' + str(motion_counter) + '_cur.jpg', current_image)
 
          if advanced_motion_analisys(motion_counter) == True:
+
+             motion_counter = motion_counter + 1
+             print('Motion # ' + str(motion_counter) + ' detected!!!')
+             print('Motion diff = ' + str(diff))
+
              capture_motion(diff)
              send_picture()
 
@@ -169,7 +172,3 @@ while True:
     #print('Difference is ' + str(diff))
 
     prev_image = current_image
-
-    
-
-
