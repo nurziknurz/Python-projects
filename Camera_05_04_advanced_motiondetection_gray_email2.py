@@ -8,11 +8,10 @@ import smtplib
 import ssl
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
-
 import numpy as np
 
 
-
+#function to capture a high resolution photo to be sent via e-mail
 def capture_motion(difference):
 
     current_diff = difference
@@ -27,6 +26,8 @@ def capture_motion(difference):
 
         camera.capture('motion_capture.jpg', use_video_port = True)
 
+
+#function to determine difference in current and previous images via Edges approach
 def advanced_motion_analisys(pic_number):
 
     img_cur = cv2.imread('motion_' + str(pic_number) + '_cur.jpg')
@@ -62,6 +63,7 @@ def advanced_motion_analisys(pic_number):
     return if_motion
 
 
+#function to send the high resolution image via e-mail
 def send_picture():
 
     toaddr = 'konstantin.kalushev@gmail.com'
@@ -90,6 +92,9 @@ def send_picture():
     except SMTPException as error:
         print('Error sending email')
 
+
+#main part of the program
+
 print('Motion detector app is initialized')
 
 time.sleep(10)
@@ -106,6 +111,7 @@ first = True
 
 print("Starting camera session...")
 
+#main loop which determins motion by comparing current and previous images captured in gray
 while True:
     
     with picamera.PiCamera() as camera:
@@ -132,12 +138,13 @@ while True:
 
     cnt = 0
     diff = 0
+    brightness = 0
 
     width = current_image.shape[1]
     height = current_image.shape[0]
     #print('Shape ' + str(width) + ' x ' + str(height))
     
-    
+    #calculating the amount of difference in pixel values for previous and current images
     for i in range (0, width):
         for j in range (0, height):
             cnt = cnt+1
@@ -146,17 +153,31 @@ while True:
                 pixel1 = current_image[j][i]
                 pixel2 = prev_image[j][i]
                 diff = diff + abs(int(pixel1) - int(pixel2))
+                #additionally calculating the amount of total brightness to correct threshold since if falls with the lower brightness
+                brightness = brightness + pixel1 
 
+                #to release for colored images
                 #diff = diff + abs(int(pixel1[2])-int(pixel2[2]))
                 #diff = diff + abs(int(pixel1[0])-int(pixel2[0]))
                 #diff = diff + abs(int(pixel1[1])-int(pixel2[1]))
                 cnt = 0
 
+    #determining the threshold which depends on brightness
+
+    if int(brightness / (3*width*height)) < 29:
+
+        threshold = 20000
+    else:
+
+        threshold = 30000
+
+    #if initial motion is detected, the following actions are performed
     if diff > threshold:
 
          cv2.imwrite('motion_' + str(motion_counter) + '_prev.jpg', prev_image)
          cv2.imwrite('motion_' + str(motion_counter) + '_cur.jpg', current_image)
 
+        #advanced motion check via Edges approach
          if advanced_motion_analisys(motion_counter) == True:
 
              motion_counter = motion_counter + 1
