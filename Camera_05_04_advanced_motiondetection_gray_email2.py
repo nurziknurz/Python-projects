@@ -8,7 +8,11 @@ import smtplib
 import ssl
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 import numpy as np
+import RPi.GPIO as GPIO
+from pi_sht1x import SHT1x
+
 
 
 #function to capture a high resolution photo to be sent via e-mail
@@ -27,7 +31,9 @@ def capture_motion(difference):
         camera.capture('motion_capture.jpg', use_video_port = True)
 
 
-#function to determine difference in current and previous images via Edges approach
+
+
+#function to determine difference between current and previous images by Edges approach
 def advanced_motion_analisys(pic_number):
 
     img_cur = cv2.imread('motion_' + str(pic_number) + '_cur.jpg')
@@ -54,13 +60,18 @@ def advanced_motion_analisys(pic_number):
                     pixel2 = edges_prev[j][i]
                     diff_adv = diff_adv + abs(int(pixel1) - int(pixel2))
                     cnt_adv = 0
+    #TO DELETE
+    print('EDGE diff = ' + str(diff_adv))
 
-    if diff_adv>9000:
+    if diff_adv>7000: #initial threshold was 9000
         if_motion = True
     else:
         if_motion = False
     
     return if_motion
+
+
+
 
 
 #function to send the high resolution image via e-mail
@@ -93,11 +104,41 @@ def send_picture():
         print('Error sending email')
 
 
+
+
+#function to send message via e-mail
+def send_message(my_message):
+
+    now_date2 = datetime.datetime.now()
+
+    toaddr = 'konstantin.kalushev@gmail.com'
+    me = 'robot.tarasovka@yandex.ru'
+    subject = 'Message from Tarasovka of ' + str(now_date2.year) + '-' + str(now_date2.month) + '-' + str(now_date2.day) + ' at ' + str(now_date2.hour) + ':' + str(now_date2.minute)
+
+    body = str(my_message)
+    msg = MIMEText(body, 'plain', 'utf-8')
+    msg['Subject'] = subject
+    msg['From'] = me
+    msg['To'] = toaddr
+    
+
+    try:
+        s = smtplib.SMTP_SSL('smtp.yandex.ru:465')
+        s.ehlo()
+        #s.starttls()
+        s.ehlo()
+        s.login(user = 'robot.tarasovka@yandex.ru', password = 'nurzik2011')
+        s.sendmail(me, toaddr, msg.as_string())
+        s.quit()
+    except SMTPException as error:
+        print('Error sending email')
+
+
 #main part of the program
 
 print('Motion detector app is initialized')
 
-time.sleep(10)
+time.sleep(15)
 
 threshold = 30000
 
@@ -105,14 +146,32 @@ no_pixels = 4000
 
 motion_counter = 0
 
+current_time = time.time()//1
+previous_time = current_time
+
 diff = 0
 first = True
 
 
 print("Starting camera session...")
 
+print('Sending initial email')
+
+send_message('The camera is initialized')
+
+with SHT1x(18, 23, gpio_mode=GPIO.BCM) as sensor:
+    
+        temp = sensor.read_temperature()
+        humidity = sensor.read_humidity(temp)
+        sensor.calculate_dew_point(temp, humidity)
+        send_message(sensor)
+
+
+
 #main loop which determins motion by comparing current and previous images captured in gray
 while True:
+
+    current_time = time.time() // 1
     
     with picamera.PiCamera() as camera:
         
@@ -139,6 +198,7 @@ while True:
     cnt = 0
     diff = 0
     brightness = 0
+    total_cnt = 0
 
     width = current_image.shape[1]
     height = current_image.shape[0]
@@ -161,12 +221,18 @@ while True:
                 #diff = diff + abs(int(pixel1[0])-int(pixel2[0]))
                 #diff = diff + abs(int(pixel1[1])-int(pixel2[1]))
                 cnt = 0
+                total_cnt = total_cnt + 1
 
-    #determining the threshold which depends on brightness
+    #TO DELETE
+    #print('diff = ' + str(diff))
+    #print('absolute brightness = ' + str(brightness))
+    #print('brightness = ' + str(int(brightness / total_cnt)))
 
-    if int(brightness / (3*width*height)) < 29:
+    #determining the threshold which depends on brightness (for colored photos it should be *3)
 
-        threshold = 20000
+    if int(brightness / total_cnt) < 31:
+
+        threshold = 15000
     else:
 
         threshold = 30000
@@ -183,6 +249,8 @@ while True:
              motion_counter = motion_counter + 1
              print('Motion # ' + str(motion_counter) + ' detected!!!')
              print('Motion diff = ' + str(diff))
+             print('current threshold = ' + str(threshold))
+             print('')
 
              capture_motion(diff)
              send_picture()
@@ -193,3 +261,20 @@ while True:
     #print('Difference is ' + str(diff))
 
     prev_image = current_image
+
+    #determining whether it is time to send periodic picture according to the formula 60 *[number of minutes]
+    if (current_time - previous_time) > 60*60*3:
+
+        print('sending periodic picture')
+        capture_motion('periodic picture')
+        send_picture()
+        previous_time = current_time
+        
+        with SHT1x(18, 23, gpio_mode=GPIO.BCM) as sensor:
+    
+            temp = sensor.read_temperature()
+            humidity = sensor.read_humidity(temp)
+            sensor.calculate_dew_point(temp, humidity)
+            send_message(sensor)
+
+
