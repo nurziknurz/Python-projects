@@ -1,3 +1,5 @@
+#v.1.1 checks ping and if it is inactive,the system sleeps (made to avodie mistake and abortion when there is no internet connection
+
 import picamera
 import time
 import datetime
@@ -12,6 +14,20 @@ from email.mime.text import MIMEText
 import numpy as np
 import RPi.GPIO as GPIO
 
+
+#function to check whether there is ping
+
+def if_ping():
+
+
+    hostname = "google.com"
+    response = os.system("ping -c 1 " + hostname)
+    if response == 0:
+        pingstatus = 1
+    else:
+        pingstatus = 0
+        
+    return pingstatus
 
 
 #function to capture a high resolution photo to be sent via e-mail
@@ -143,15 +159,22 @@ previous_time = current_time
 diff = 0
 first = True
 
+
+
 #initial messages and e-mails block
 
 print("Starting camera session...")
 
 print('Sending initial email and picture')
 
-send_message('The camera is initialized')
-capture_motion(000000)
-send_picture()
+if if_ping() == 1:
+    send_message('The camera is initialized')
+    capture_motion(000000)
+    send_picture()
+
+else:
+    print("No internet connection")
+
 
 
 #main loop which determins motion by comparing current and previous images captured in gray
@@ -237,8 +260,13 @@ while True:
              print('current threshold = ' + str(threshold))
              print('')
 
-             capture_motion(diff)
-             send_picture()
+             if if_ping() == 1:
+                capture_motion(diff)
+                send_picture()
+
+             else:
+                print("No internet connection")
+
 
          first = True
          continue
@@ -251,6 +279,13 @@ while True:
     if (current_time - previous_time) > 60*60*2:
 
         print('sending periodic picture')
-        capture_motion('periodic picture')
-        send_picture()
-        previous_time = current_time
+
+        if if_ping() == 1:
+            capture_motion('periodic picture')
+            send_picture()
+
+        else:
+            print("No internet connection")
+        
+
+    previous_time = current_time
