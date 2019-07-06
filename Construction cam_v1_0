@@ -76,6 +76,7 @@ def advanced_motion_analisys(pic_number):
 #function to send the high resolution image via e-mail
 def send_picture():
 
+    now_date = datetime.datetime.now()
     toaddr = 'konstantin.kalushev@gmail.com'
     me = 'robot.tarasovka@yandex.ru'
     subject = 'Current photo from Tarasovka ' + str(now_date.year) + '-' + str(now_date.month) + '-' + str(now_date.day) + ' at ' + str(now_date.hour) + ':' + str(now_date.minute)
@@ -142,12 +143,15 @@ previous_time = current_time
 diff = 0
 first = True
 
+#initial messages and e-mails block
 
 print("Starting camera session...")
 
-print('Sending initial email')
+print('Sending initial email and picture')
 
 send_message('The camera is initialized')
+capture_motion(000000)
+send_picture()
 
 
 #main loop which determins motion by comparing current and previous images captured in gray
@@ -250,4 +254,3 @@ while True:
         capture_motion('periodic picture')
         send_picture()
         previous_time = current_time
-        
