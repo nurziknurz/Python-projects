@@ -283,9 +283,7 @@ while True:
         if if_ping() == 1:
             capture_motion('periodic picture')
             send_picture()
+            previous_time = current_time
 
         else:
             print("No internet connection")
-        
-
-    previous_time = current_time
