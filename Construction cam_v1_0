@@ -11,7 +11,6 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import numpy as np
 import RPi.GPIO as GPIO
-from pi_sht1x import SHT1x
 
 
 
@@ -92,18 +91,13 @@ def send_picture():
     fp.close()
     msg.attach(img)
 
-    try:
-        s = smtplib.SMTP_SSL('smtp.yandex.ru:465')
-        s.ehlo()
-        #s.starttls()
-        s.ehlo()
-        s.login(user = 'robot.tarasovka@yandex.ru', password = 'nurzik2011')
-        s.sendmail(me, toaddr, msg.as_string())
-        s.quit()
-    except SMTPException as error:
-        print('Error sending email')
-
-
+    s = smtplib.SMTP_SSL('smtp.yandex.ru:465')
+    s.ehlo()
+    #s.starttls()
+    s.ehlo()
+    s.login(user = 'robot.tarasovka@yandex.ru', password = 'nurzik2011')
+    s.sendmail(me, toaddr, msg.as_string())
+    s.quit()
 
 
 #function to send message via e-mail
@@ -121,17 +115,13 @@ def send_message(my_message):
     msg['From'] = me
     msg['To'] = toaddr
     
-
-    try:
-        s = smtplib.SMTP_SSL('smtp.yandex.ru:465')
-        s.ehlo()
-        #s.starttls()
-        s.ehlo()
-        s.login(user = 'robot.tarasovka@yandex.ru', password = 'nurzik2011')
-        s.sendmail(me, toaddr, msg.as_string())
-        s.quit()
-    except SMTPException as error:
-        print('Error sending email')
+    s = smtplib.SMTP_SSL('smtp.yandex.ru:465')
+    s.ehlo()
+    #s.starttls()
+    s.ehlo()
+    s.login(user = 'robot.tarasovka@yandex.ru', password = 'nurzik2011')
+    s.sendmail(me, toaddr, msg.as_string())
+    s.quit()
 
 
 #main part of the program
@@ -158,14 +148,6 @@ print("Starting camera session...")
 print('Sending initial email')
 
 send_message('The camera is initialized')
-
-with SHT1x(18, 23, gpio_mode=GPIO.BCM) as sensor:
-    
-        temp = sensor.read_temperature()
-        humidity = sensor.read_humidity(temp)
-        sensor.calculate_dew_point(temp, humidity)
-        send_message(sensor)
-
 
 
 #main loop which determins motion by comparing current and previous images captured in gray
@@ -202,7 +184,6 @@ while True:
 
     width = current_image.shape[1]
     height = current_image.shape[0]
-    #print('Shape ' + str(width) + ' x ' + str(height))
     
     #calculating the amount of difference in pixel values for previous and current images
     for i in range (0, width):
@@ -232,10 +213,10 @@ while True:
 
     if int(brightness / total_cnt) < 31:
 
-        threshold = 15000
+        threshold = 30000
     else:
 
-        threshold = 30000
+        threshold = 70000
 
     #if initial motion is detected, the following actions are performed
     if diff > threshold:
@@ -263,16 +244,10 @@ while True:
     prev_image = current_image
 
     #determining whether it is time to send periodic picture according to the formula 60 *[number of minutes]
-    if (current_time - previous_time) > 60*60*3:
+    if (current_time - previous_time) > 60*60*2:
 
         print('sending periodic picture')
         capture_motion('periodic picture')
         send_picture()
         previous_time = current_time
         
-        with SHT1x(18, 23, gpio_mode=GPIO.BCM) as sensor:
-    
-            temp = sensor.read_temperature()
-            humidity = sensor.read_humidity(temp)
-            sensor.calculate_dew_point(temp, humidity)
-            send_message(sensor)
