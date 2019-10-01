@@ -118,6 +118,56 @@ while True:
       break
 
   TurnRight()
+  
+  #PIN 18 as PWM for speed control
+#PIN 24 as 0/1 for direction control
+
+import RPi.GPIO as GPIO
+import time
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(24, GPIO.OUT)
+GPIO.setup(18, GPIO.OUT)
+GPIO.setup(17, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)
+p = GPIO.PWM(18, 100)
+
+
+while True:
+
+    if_signal = GPIO.input(17)
+
+    print(if_signal)
+
+    if if_signal == 0:
+    
+        p.start(0)
+
+
+        for x in range (0,2):
+            
+            print("Move forward")
+
+            p.ChangeDutyCycle(100)
+
+            GPIO.output(24, GPIO.HIGH)
+            time.sleep(2)
+
+            p.ChangeDutyCycle(0)
+
+            print("Move backward")
+
+            p.ChangeDutyCycle(20)
+            GPIO.output(24, GPIO.LOW)
+            time.sleep(2)
+
+            p.ChangeDutyCycle(0)
+
+            time.sleep(2)
+
+    time.sleep(1)
+
+GPIO.cleanup()
+
 
 
     
