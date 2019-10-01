@@ -33,3 +33,99 @@ for x in range (0,2):
     time.sleep(2)
 
 GPIO.cleanup()
+
+def CheckSurrounding():
+
+  if sensor_right or sensor_left or sensor_center == 1:
+
+     obstacle = True
+  else: obstacle = False
+
+  return obstacle
+
+
+def TurnRight():
+
+  MOTORS RIGHT
+
+  time.sleep(1)
+
+
+def MoveForward():
+
+  MotorsOn()
+
+  time.sleep(2)
+
+  MotorsOff()
+
+  return
+
+
+def MotorsOn():
+
+  TURN MOTORS ON
+
+  return
+
+
+def MotorsOff():
+
+  TURN MOTORS OFF
+
+  return
+
+
+
+
+import time
+
+INITIALISE SENSORS AND MOTORS
+
+while True:
+
+  if_obstacle = CheckSurrounding()
+
+  if if_obstacle == True:
+
+    TurnRight()
+
+  else:
+
+    MoveForward()
+
+
+
+
+import time
+
+INITIALISE SENSORS AND MOTORS
+
+MotorsOff()
+
+while True:
+
+  while True:
+
+    MotorsOn()
+
+    if_obstacle = CheckSurrounding()
+
+    if if_obstacle == True:
+
+      MotorsOff()
+
+      break
+
+  TurnRight()
+
+
+    
+
+
+
+
+
+
+
+    
