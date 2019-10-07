@@ -1,13 +1,26 @@
+import vlc
+import time
 import RPi.GPIO as GPIO
 import time
 
 
 def CheckSurrounding():
 
-  sensor_right = GPIO.input(17)
+  sensor_right = GPIO.input(26)
+  sensor_left = GPIO.input(19)
+  sensor_center = GPIO.input(13)
+  
+  print("right sensor: " + str(sensor_right))
+  print("left sensor: " + str(sensor_left))
+  print("center sensor: " + str(sensor_center))
 
-  if sensor_right or sensor_left or sensor_center == 1:
+  print()
 
+  if sensor_right == 0 or sensor_left == 0 or sensor_center == 0:
+
+     print("detecting obstacle")
+
+     print()
      obstacle = True
   else: obstacle = False
 
@@ -16,13 +29,26 @@ def CheckSurrounding():
 
 def TurnRight():
 
-  p.ChangeDutyCycleu(50)
+  print("Turn right")
+
+  p.ChangeDutyCycle(50)
+  r.ChangeDutyCycle(50)
    
   GPIO.output(24, GPIO.LOW)
+  GPIO.output(25, GPIO.HIGH)
   
   time.sleep(2)
 
   p.ChangeDutyCycle(0)
+  r.ChangeDutyCycle(0)
+
+  time.sleep(3)
+
+  player = vlc.MediaPlayer("/home/pi/Documents/message4.wav")
+
+  player.play()
+
+  time.sleep(10)
 
 
 def MoveForward():
@@ -40,9 +66,11 @@ def MotorsOn():
     
   print("Move forward")
 
-  p.ChangeDutyCycleu(100)
+  p.ChangeDutyCycle(100)
+  r.ChangeDutyCycle(100)
 
   GPIO.output(24, GPIO.HIGH)
+  GPIO.output(25, GPIO.HIGH)
 
   return
 
@@ -50,8 +78,11 @@ def MotorsOn():
 def MotorsOff():
 
   p.ChangeDutyCycle(0)
+  r.ChangeDutyCycle(0)
 
   print("Motors stop")
+
+  time.sleep(3)
 
   return
 
@@ -62,13 +93,34 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setup(24, GPIO.OUT)
 GPIO.setup(18, GPIO.OUT)
 
-GPIO.setup(17, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)
+GPIO.setup(23, GPIO.OUT)
+GPIO.setup(25, GPIO.OUT)
+
+GPIO.setup(13, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)
+GPIO.setup(19, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)
+GPIO.setup(26, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)
 
 p = GPIO.PWM(18, 100)
+r = GPIO.PWM(23, 100)
 
 p.start(0)
+r.start(0)
 
 MotorsOff()
+
+time.sleep(1)
+
+print("Initializing robot...")
+
+time.sleep(10)
+
+player = vlc.MediaPlayer("/home/pi/Documents/message5.wav")
+
+player.play()
+
+time.sleep(10)
+
+print("starting program...")
 
 
 while True:
@@ -86,15 +138,3 @@ while True:
       break
 
   TurnRight()
-
-
-
-    
-
-
-
-
-
-
-
-    
