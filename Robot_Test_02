@@ -1,19 +1,40 @@
-#Robot Test with camera for interaction
-
+import picamera
 import cv2
-
+import time
 
 #face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml') - This does not work for some reason
 
-face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml") #This is the line that works
 
-image = cv2.imread('TestPhoto_02.jpg')
+#function to capture a high resolution photo to be sent via e-mail
+def capture_motion():
+
+    with picamera.PiCamera() as camera:
+
+        camera.resolution = (800,600)
+
+        camera.capture('motion_capture.jpg', use_video_port = True)
+
+
+time.sleep(3)
+
+capture_motion()
+
+
+#face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml") #This is the line that works
+face_cascade = cv2.CascadeClassifier('/home/pi/Documents/haarcascade_frontalface_default.xml')
+
+print(face_cascade)
+
+print(face_cascade.empty())
+#face_cascade.load('\home\pi\Documents\haarcascade_frontalface_default.xml')
+
+image = cv2.imread('motion_capture.jpg')
 
 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-faces = face_cascade.detectMultiScale(gray, scaleFactor= 1.1, minNeighbors= 18, minSize=(70, 70))
+faces = face_cascade.detectMultiScale(gray, scaleFactor= 1.1, minNeighbors= 10, minSize=(40, 40))
 
-faces_detected = "Лиц обнаружено: " + format(len(faces))
+faces_detected = "Number of faces: " + format(len(faces))
 
 print(faces)
 
@@ -28,6 +49,7 @@ cv2.imshow("faces", image)
 cv2.waitKey(0)
 
 cv2.destroyAllWindows()
+
 
 
 
