@@ -1,11 +1,11 @@
 import picamera
 import cv2
+
+import vlc
 import time
+import RPi.GPIO as GPIO
 
-#face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml') - This does not work for some reason
 
-
-#function to capture a high resolution photo to be sent via e-mail
 def capture_motion():
 
     with picamera.PiCamera() as camera:
@@ -15,48 +15,43 @@ def capture_motion():
         camera.capture('motion_capture.jpg', use_video_port = True)
 
 
-time.sleep(3)
+def DetermineFace():
 
-capture_motion()
+  capture_motion()
 
+  face_cascade = cv2.CascadeClassifier('/home/pi/Documents/haarcascade_frontalface_default.xml')
 
-#face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml") #This is the line that works
-face_cascade = cv2.CascadeClassifier('/home/pi/Documents/haarcascade_frontalface_default.xml')
+  image = cv2.imread('motion_capture.jpg')
 
-print(face_cascade)
+  gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-print(face_cascade.empty())
-#face_cascade.load('\home\pi\Documents\haarcascade_frontalface_default.xml')
+  faces = face_cascade.detectMultiScale(gray, scaleFactor= 1.1, minNeighbors= 10, minSize=(40, 40))
 
-image = cv2.imread('motion_capture.jpg')
-
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-faces = face_cascade.detectMultiScale(gray, scaleFactor= 1.1, minNeighbors= 10, minSize=(40, 40))
-
-faces_detected = "Number of faces: " + format(len(faces))
-
-print(faces)
-
-print(faces_detected)
-
-# Рисуем квадраты вокруг лиц
-for (x, y, w, h) in faces:
-    cv2.rectangle(image, (x, y), (x+w, y+h), (255, 155, 0), 4)
-
-cv2.imshow("faces", image)
-
-cv2.waitKey(0)
-
-cv2.destroyAllWindows()
+  faces_detected = "Number of faces: " + format(len(faces))
 
 
+  print(faces_detected)
+
+  return faces
 
 
-import vlc
-import time
-import RPi.GPIO as GPIO
-import time
+def StartDialog()
+
+  print("starting dialog")
+
+  time.sleep(1)
+
+  player3 = vlc.MediaPlayer("/home/pi/Documents/message3.wav")
+
+  player3.play()
+
+  time.sleep(10)
+
+    player6 = vlc.MediaPlayer("/home/pi/Documents/message6.wav")
+
+  player6.play()
+
+  time.sleep(10)
 
 
 def CheckSurrounding():
@@ -99,9 +94,9 @@ def TurnRight():
 
   time.sleep(3)
 
-  player = vlc.MediaPlayer("/home/pi/Documents/message4.wav")
+  player4 = vlc.MediaPlayer("/home/pi/Documents/message4.wav")
 
-  player.play()
+  player4.play()
 
   time.sleep(10)
 
@@ -142,6 +137,8 @@ def MotorsOff():
   return
 
 
+
+
 GPIO.cleanup()
 
 GPIO.setmode(GPIO.BCM)
@@ -169,16 +166,26 @@ print("Initializing robot...")
 
 time.sleep(10)
 
-player = vlc.MediaPlayer("/home/pi/Documents/message5.wav")
+player1 = vlc.MediaPlayer("/home/pi/Documents/message1.wav")
 
-player.play()
+player1.play()
 
 time.sleep(10)
 
 print("starting program...")
 
 
+
+
 while True:
+
+  NumberOfFaces = DetermineFace()
+
+  if NumberOfFaces > 0:
+
+    StartDialog()
+
+    NumberOfFaces = 0
 
   MotorsOn()
 
@@ -193,3 +200,7 @@ while True:
       break
 
   TurnRight()
+
+
+
+
