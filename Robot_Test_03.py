@@ -2,7 +2,9 @@
 
 import picamera
 import cv2
+
 import os
+import random
 
 import vlc
 import time
@@ -44,11 +46,15 @@ def StartDialog():
 
   time.sleep(1)
 
-  os.system('espeak -s95 "Hello. You are a human" 2>/dev/null')  
+  os.system('espeak -s95 "Hello. What is your name?" 2>/dev/null')  
 
   time.sleep(5)
 
   os.system('espeak -s95 "I want to be your friend" 2>/dev/null')  
+
+  time.sleep(5)  
+    
+  os.system('espeak -s95 "I have a problem. I am very stupid" 2>/dev/null')  
 
   time.sleep(5)
 
@@ -130,8 +136,10 @@ def MotorsOff():
   print("Motors stop")
 
   time.sleep(1)
+    
+  textToSpeak = 'espeak -s95 "' + random.choice(stopList) + '" 2>/dev/null'
 
-  os.system('espeak -s95 "Stop" 2>/dev/null')  
+  os.system(textToSpeak)  
 
   time.sleep(3)
 
@@ -139,6 +147,8 @@ def MotorsOff():
 
 
 stopList = ['Stop', 'What is this?', 'There is something ahead', 'I can see something']
+
+turnList = ['I want to turn', 'I have to avoide obstacles', 'I am very carefull', 'I do not want to have a problem']
 
 time.sleep(5)
 
@@ -160,6 +170,8 @@ r = GPIO.PWM(23, 100)
 
 p.start(0)
 r.start(0)
+
+
 
 time.sleep(1)
 
