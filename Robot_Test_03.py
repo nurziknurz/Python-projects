@@ -131,12 +131,14 @@ def MotorsOff():
 
   time.sleep(1)
 
-  os.system('espeak -s95 "I have to stop" 2>/dev/null')  
+  os.system('espeak -s95 "Stop" 2>/dev/null')  
 
   time.sleep(3)
 
   return
 
+
+stopList = ['Stop', 'What is this?', 'There is something ahead', 'I can see something']
 
 time.sleep(5)
 
@@ -159,17 +161,19 @@ r = GPIO.PWM(23, 100)
 p.start(0)
 r.start(0)
 
-MotorsOff()
-
 time.sleep(1)
 
 print("Initializing robot...")
 
-os.system('espeak -s95 "This is robot speaking. welcome to my world" 2>/dev/null')
+os.system('espeak -s95 "The programm is initiated" 2>/dev/null')
 
-time.sleep(10)
+time.sleep(5)
 
-print("starting program...")
+print("starting robot program...")
+
+os.system('espeak -s95 "My name is robot Saahaar" 2>/dev/null')
+
+time.sleep(5)
 
 
 
