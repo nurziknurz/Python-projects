@@ -1,4 +1,7 @@
-#v.2.0 infrared camera + STX1 sensor
+#v.2.0 infrared camera + STX_1
+#To run the file on Raspberry's boot do the following:
+#in terminal: sudo nano /etc/xdg/lxsession/LXDE-pi/autostart
+#in nano add this line: @lxterminal -e python3 /home/pi/run.pu
 
 import picamera
 import time
